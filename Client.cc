@@ -21,11 +21,10 @@ bool ClientWriter::Init() {
         if (errno != EINPROGRESS) {
             return false;
         }
-        event = event_new(client->GetBase(), sock, EV_WRITE | EV_PERSIST, &ClientWriter::OnConnect， (void*)(this));
-        if (event == nullptr) {
-            return false;
-        }
-        event_add(event, NULL);
     }
-    return truek;
+    event = event_new(client->GetBase(), sock, EV_WRITE | EV_PERSIST, &ClientWriter::OnConnect， (void*)(this));
+    if (event == nullptr) {
+        return false;
+    }
+    return 0 == event_add(event, NULL);
 }
