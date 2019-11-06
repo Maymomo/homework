@@ -24,7 +24,11 @@ set(homework_client_src
     Client.cc
     Parser.h
     Parser.cc
+    ClientMain.cc
 )
 
 add_executable(server ${homework_server_src})
 target_link_libraries(server event)
+
+add_executable(client ${homework_client_src})
+target_link_libraries(client event)

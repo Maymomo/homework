@@ -10,9 +10,6 @@ Conn::Conn(Server *server, int sock, uint64_t bufferSize) : server(server), sock
 
 
 void Conn::OnClose() {
-    if (server != nullptr) {
-        server->UnRegister(sock);
-    }
     if (event != nullptr) {
         event_del(event);
         event_free(event);
@@ -21,6 +18,9 @@ void Conn::OnClose() {
     if (sock >= 0) {
         ::close(sock);
         sock = -1;
+    }
+    if (server != nullptr) {
+        server->UnRegister(sock);
     }
 }
 
