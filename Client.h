@@ -18,7 +18,7 @@ public:
     void UnRegister(int sock);
     const std::string &ServerAddress();
     struct event_base *GetBase();
-    bool Shutdown();
+    void Shutdown();
     ~Client();
 private:
     struct event_base *base;
@@ -30,9 +30,14 @@ private:
 
 class ClientWriter {
 public:
-    ClientWriter(Client *client, int packetSize) : client(client), sock(-1), packetSize(packetSize), connected(false) {}
+    ClientWriter(Client *client, int packetSize, std::string address) : client(client), sock(-1), packetSize(packetSize), address(address) {}
     bool Init();
+    void OnClose();
+    bool OnWrite();
+    int Sock();
     ~ClientWriter();
+private:
+void InitBuffer();
 private:
     Client *client;
     int sock;
@@ -40,7 +45,7 @@ private:
     std::vector<char> buffer;
     int writeIndex;
     struct event *event;
-    bool    connected;
+    std::string address;
 public:
     static void OnConnect(int sock, short int what, void *ptr);
     static void OnEvent(int sock, short int what, void *ptr);

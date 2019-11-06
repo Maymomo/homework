@@ -1,5 +1,5 @@
 #include "Parser.h"
-
+#include <iostream>
 
 Parser::Parser() {
     Reset();
@@ -22,11 +22,10 @@ bool Parser::Parse(std::vector<char> &buffer, int len) {
     if (status == ParseStatus::HEAD && len >= HeaderLen()) {
         bodyLen = *(int*)(buffer.data());
         status = ParseStatus::BODY;
+        return false;
     }
     if (status == ParseStatus::BODY && len == (BodyLen() + HeaderLen())) {
         status = ParseStatus::OVER;
-    }
-    if (status == ParseStatus::OVER) {
         return true;
     }
     return false;

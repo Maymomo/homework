@@ -11,7 +11,7 @@
 
 #include "event.h"
 
-#define MAX_BUFFER  4096
+#define MAX_BUFFER  4096 * 2
 
 class Conn;
 

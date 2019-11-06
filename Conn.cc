@@ -13,14 +13,13 @@ void Conn::OnClose() {
     if (event != nullptr) {
         event_del(event);
         event_free(event);
+;   
         event = nullptr;
     }
+    int sockTmp = sock;
     if (sock >= 0) {
         ::close(sock);
         sock = -1;
-    }
-    if (server != nullptr) {
-        server->UnRegister(sock);
     }
 }
 
@@ -43,12 +42,14 @@ void Conn::OnEvent(int sock, short int what, void *ptr) {
     if (what & EV_READ) {
         if (!conn->OnRead()) {
             conn->OnClose();
+            conn->server->UnRegister(conn->sock);
             return;
         }
     }
     if (what & EV_WRITE) {
         if (!conn->OnWrite()) {
             conn->OnClose();
+            conn->server->UnRegister(conn->sock);
             return;
         }
     }
@@ -75,16 +76,20 @@ bool Conn::OnRead() {
         }
         server->IncrBytes(readed);
         writeIndex += readed;
-        if (parser.Parse(buffer, writeIndex)) {
+        while(!parser.Parse(buffer, writeIndex)) {
+            int parserSize = parser.BodyLen() + parser.HeaderLen();
+            if (parserSize > buffer.size()) {
+                return false;
+            } else if (writeIndex < parserSize) {
+                return true;
+            }
             server->IncrPacket();
             writeIndex = 0;
             parser.Reset();
-        } else {
-            return false;
         }
-        if (parser.BodyLen() + parser.HeaderLen() > buffer.size()) {
-            return false;
-        }
+        std::cout << parser.BodyLen()  << std::endl;
+        std::cout << parser.HeaderLen()  << std::endl;
+    
     }
     return true;
 }

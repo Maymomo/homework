@@ -9,7 +9,9 @@
 #include "event2/listener.h"
 
 
-Server::Server(std::string address) : packets(0), bytes(0), startTime(0), shutdown(false), address(address) {}
+Server::Server(std::string address) : 
+        base(nullptr), listener(nullptr), signalEvent(nullptr), timerEvent(nullptr),
+        packets(0), bytes(0), startTime(0), shutdown(false), address(address) {}
 
 
 bool Server::Start() {
@@ -27,7 +29,7 @@ bool Server::Start() {
         return false;
     }
     listener = evconnlistener_new_bind(base, &Server::Accept, (void *)this,
-	    0, -1,
+	    LEV_OPT_REUSEABLE, 15,
 	    (struct sockaddr*)&sin,
 	    sizeof(sin));
     if (listener == nullptr) {
@@ -109,9 +111,7 @@ void Server::UnRegister(int sock) {
 
 Server::~Server() {
     Shutdown();
-    if (base != nullptr) {
-        event_base_free(base);
-    }
+
     if (signalEvent != nullptr) {
         event_free(signalEvent);
     }
@@ -120,6 +120,9 @@ Server::~Server() {
     }
     if (timerEvent != nullptr) {
         event_free(timerEvent);
+    }
+    if (base != nullptr) {
+        event_base_free(base);
     }
 }
 
