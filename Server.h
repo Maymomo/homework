@@ -27,9 +27,12 @@ public:
     void UnRegister(int sock);
     ~Server();
 private:
+    void AddTimer();
+private:
     struct event_base *base;
     struct evconnlistener *listener;
     struct event        *signalEvent;
+    struct event        *timerEvent;
     std::atomic<uint64_t>  packets;
     std::atomic<uint64_t>  bytes;
     std::atomic<time_t>  startTime;
@@ -40,4 +43,5 @@ public:
     static void Accept(struct evconnlistener *listener,
     evutil_socket_t sock, struct sockaddr *addr, int len, void *ptr);
     static void Signal(evutil_socket_t, short, void *);
+    static void OnTimer(int,  short what, void *ptr);
 };

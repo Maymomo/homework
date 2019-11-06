@@ -38,7 +38,19 @@ bool Server::Start() {
         return false;
     }
     event_add(signalEvent, nullptr);
+    timerEvent = evtimer_new(base, &Server::OnTimer, (void*)this);
+    if (timerEvent == nullptr) {
+        return false;
+    }
+    AddTimer();
     return event_base_dispatch(base) == 0;
+}
+
+void Server::AddTimer() {
+    if (timerEvent != nullptr) {
+        struct timeval tv = {.tv_sec = 1, .tv_usec = 0 };
+        event_add(timerEvent, &tv);
+    }
 }
 
 void Server::Accept(evconnlistener *listener, int sock, sockaddr *addr, int len, void *ptr) {
@@ -67,6 +79,9 @@ void Server::Shutdown() {
     }
     if (signalEvent != nullptr) {
         event_del(signalEvent);
+    }
+    if (timerEvent != nullptr) {
+        event_del(timerEvent);
     }
     for (auto &conn : conns) {
         conn.second->OnClose();
@@ -103,6 +118,9 @@ Server::~Server() {
     if (listener != nullptr) {
         evconnlistener_free(listener);
     }
+    if (timerEvent != nullptr) {
+        event_free(timerEvent);
+    }
 }
 
 void Server::IncrBytes(uint64_t byte) {
@@ -111,4 +129,13 @@ void Server::IncrBytes(uint64_t byte) {
 
 void Server::IncrPacket() {
     packets += 1;
+}
+
+void Server::OnTimer(int, short what, void *ptr) {
+    Server *server = static_cast<Server*>(ptr);
+    uint64_t packets = server->packets.exchange(0);
+    uint64_t bytes = server->bytes.exchange(0);
+    std::cout << packets << "/s" << std::endl;
+    std::cout << bytes / 1024 << "kb/s" << std::endl;
+    server->AddTimer();
 }
